@@ -1,11 +1,10 @@
-
 import express from 'express';
 import { getLoginUrl, exchangeCodeForToken, refreshToken, getUserProfile } from '../services/auth.js';
 
 const router = express.Router();
 
-router.get('/url', (req, res) => {
-    res.json({ url: getLoginUrl() });
+router.get('/login', (req, res) => {
+    res.redirect(getLoginUrl());
 });
 
 router.get('/callback', async (req, res) => {
@@ -14,14 +13,16 @@ router.get('/callback', async (req, res) => {
         const credentials = await exchangeCodeForToken(code);
         req.session.credentials = credentials;
         req.session.user_profile = await getUserProfile(credentials);
-        res.redirect('http://localhost:5173/home'); // Redirect to your frontend application
+        // Redirect to frontend after successful login
+        const { FRONTEND_URL } = await import('../config.js');
+        res.redirect(`${FRONTEND_URL}/home`);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 router.get('/token', (req, res) => {
-    if (req.session.credentials) {
+    if (req.session.credentials) {  
         res.json(req.session.credentials);
     } else {
         res.status(401).json({ error: 'Unauthorized' });

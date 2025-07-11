@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Typography, CircularProgress, Alert } from '@mui/material';
 import { useParams } from 'react-router-dom';
@@ -11,7 +10,9 @@ function ProjectsPage() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects`)
+        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects`, {
+            credentials: 'include', // Send cookies for session auth
+        })
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch projects.');

@@ -6,27 +6,27 @@ import axios from 'axios';
 
 const dataManagementClient = new DataManagementClient();
 
-export const getContents = async (projectId, folderId, token) => {
+export const getContents = async (projectId, folderId, accessToken) => {
     if (folderId) {
-        const contents = await dataManagementClient.getFolderContents(projectId, folderId, null, token);
+        const contents = await dataManagementClient.getFolderContents(projectId, folderId, null, { accessToken });
         return contents.data;
     } else {
-        const contents = await dataManagementClient.getProjectTopFolders(projectId, token);
+        const contents = await dataManagementClient.getProjectTopFolders(projectId, { accessToken });
         return contents.data;
     }
 };
 
-export const getVersions = async (projectId, itemId, token) => {
-    const versions = await dataManagementClient.getItemVersions(projectId, itemId, null, token);
+export const getVersions = async (projectId, itemId, accessToken) => {
+    const versions = await dataManagementClient.getItemVersions(projectId, itemId, null, { accessToken });
     return versions.data;
 };
 
-export const createFolder = async (projectId, folderName, parentFolderId, token) => {
-    const newFolder = await dataManagementClient.postFolder(projectId, { jsonapi: { version: '1.0' }, data: { type: 'folders', attributes: { name: folderName, extension: { type: 'folders:autodesk.core:Folder', version: '1.0' } }, relationships: { parent: { data: { type: 'folders', id: parentFolderId } } } } }, token);
+export const createFolder = async (projectId, folderName, parentFolderId, accessToken) => {
+    const newFolder = await dataManagementClient.postFolder(projectId, { jsonapi: { version: '1.0' }, data: { type: 'folders', attributes: { name: folderName, extension: { type: 'folders:autodesk.core:Folder', version: '1.0' } }, relationships: { parent: { data: { type: 'folders', id: parentFolderId } } } } }, { accessToken });
     return newFolder.data;
 };
 
-export const uploadFile = async (projectId, fileName, parentFolderId, filePath, token) => {
+export const uploadFile = async (projectId, fileName, parentFolderId, filePath, accessToken) => {
     // 1. Create a storage location in the folder
     const storagePayload = {
         jsonapi: { version: '1.0' },
@@ -43,7 +43,7 @@ export const uploadFile = async (projectId, fileName, parentFolderId, filePath, 
             }
         }
     };
-    const storageRes = await dataManagementClient.createStorage(token.access_token, projectId, undefined, storagePayload);
+    const storageRes = await dataManagementClient.createStorage(accessToken, projectId, undefined, storagePayload);
     const storageId = storageRes.data.data.id; // e.g. urn:adsk.objects:os.object:bucketKey/objectKey
     const uploadUrl = storageRes.data.data.links.upload.href;
 
@@ -100,7 +100,7 @@ export const uploadFile = async (projectId, fileName, parentFolderId, filePath, 
             }
         ]
     };
-    const itemRes = await dataManagementClient.createItem(token.access_token, projectId, undefined, undefined, itemPayload);
+    const itemRes = await dataManagementClient.createItem(accessToken, projectId, undefined, undefined, itemPayload);
     // Optionally, delete the temp file
     fs.unlink(filePath, () => {});
     return itemRes.data;

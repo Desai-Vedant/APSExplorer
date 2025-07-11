@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Typography, Box, Paper, Select, MenuItem, CircularProgress, Alert } from '@mui/material';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
@@ -16,15 +15,21 @@ function ProjectDetails() {
     const [runtime, setRuntime] = useState({ accessToken: '' });
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/auth/token`)
+        fetch(`${import.meta.env.VITE_API_URL}/api/auth/token`, {
+            credentials: 'include',
+        })
             .then(response => response.json())
             .then(data => setRuntime({ accessToken: data.access_token }));
 
-        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects`)
+        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects`, {
+            credentials: 'include',
+        })
             .then((response) => response.json())
             .then((data) => setProjects(data));
 
-        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects/${selectedProject}/contents`)
+        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects/${selectedProject}/contents`, {
+            credentials: 'include',
+        })
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch project contents.');

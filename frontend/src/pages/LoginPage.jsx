@@ -1,18 +1,9 @@
-
-import React, { useEffect, useState } from 'react';
 import { Button, Container, Box, Typography } from '@mui/material';
 
 function LoginPage() {
-    const [loginUrl, setLoginUrl] = useState('');
-
-    useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/auth/url`)
-            .then((response) => response.json())
-            .then((data) => setLoginUrl(data.url));
-    }, []);
-
     const handleLogin = () => {
-        window.location.href = loginUrl;
+        // Redirect the browser to the backend login endpoint
+        window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/login`;
     };
 
     return (
@@ -30,7 +21,7 @@ function LoginPage() {
                 <Typography variant="body1" gutterBottom>
                     Please log in with your Autodesk account to continue.
                 </Typography>
-                <Button variant="contained" color="primary" onClick={handleLogin} disabled={!loginUrl}>
+                <Button variant="contained" color="primary" onClick={handleLogin}>
                     Login with Autodesk
                 </Button>
             </Box>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Typography, CircularProgress, Alert } from '@mui/material';
 import HubTile from '../components/HubTile';
@@ -9,7 +8,9 @@ function HomePage() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/api/hubs`)
+        fetch(`${import.meta.env.VITE_API_URL}/api/hubs`, {
+            credentials: 'include', // Send cookies for session auth
+        })
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('Failed to fetch hubs.');

@@ -1,4 +1,3 @@
-
 import express from 'express';
 import session from 'express-session';
 import cors from 'cors';
@@ -9,17 +8,22 @@ import projectsRouter from './routes/projects.js';
 
 const app = express();
 
+app.use(cors({
+    origin: 'http://localhost:5173', // Allow your frontend origin
+    credentials: true // Allow cookies to be sent
+}));
+
+app.set('trust proxy', 1); // Trust first proxy if behind one (for secure cookies in production)
+
 app.use(session({
     secret: SESSION_SECRET || 'super-secret-key',
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if using HTTPS
-}));
-
-app.use(cors({
-    origin: '*', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    saveUninitialized: false, // Only save session if something is stored
+    cookie: {
+        secure: false, // Set to true if using HTTPS in production
+        httpOnly: true, // Prevent JS access to cookie
+        sameSite: 'lax', // Helps with CSRF
+    },
 }));
 
 app.use(express.json());
