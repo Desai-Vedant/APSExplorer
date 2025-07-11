@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "@aps_sdk/authentication": "^1.0.0",
+    "@aps_sdk/data-management": "^1.1.2",
+    "@aps_sdk/model-derivative": "^1.2.0",
+    "aps": "^0.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "multer": "^2.0.1"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "license": "MIT",
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend server for Hubs Explorer",
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

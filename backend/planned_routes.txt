@@ -1,0 +1,89 @@
+# ACC Hubs Browser Backend API Routes
+
+This document outlines the necessary API routes for the ACC Hubs Browser application.
+
+---
+
+## Authentication (AUTH)
+
+Handles user authentication and authorization with Autodesk Platform Services (APS).
+
+-   **GET /api/auth/url**
+    -   **Description:** Generates and returns the Autodesk login URL for the user to initiate the OAuth2 process.
+    -   **Response:** `{ "url": "https://developer.api.autodesk.com/authentication/v2/authorize?..." }`
+
+-   **GET /api/auth/callback**
+    -   **Description:** The redirect URI that Autodesk will call after the user grants (or denies) access. This route will handle the authorization code, exchange it for a 3-legged token, and store it.
+    -   **Query Parameters:** `code`
+    -   **Response:** Redirects the user to the frontend application's main page.
+
+-   **GET /api/auth/token**
+    -   **Description:** Retrieves the current 3-legged access token for the authenticated user.
+    -   **Response:** `{ "access_token": "...", "expires_in": 3599 }`
+
+-   **GET /api/auth/refresh**
+    -   **Description:** Refreshes the access token using the stored refresh token.
+    -   **Response:** `{ "access_token": "...", "expires_in": 3599 }`
+
+-   **GET /api/auth/status**
+    -   **Description:** Checks if the current user has a valid and active token.
+    -   **Response:** `{ "authenticated": true/false }`
+
+-   **POST /api/auth/logout**
+    -   **Description:** Logs the user out by clearing their session and invalidating the token.
+    -   **Response:** `{ "status": "success" }`
+
+---
+
+## Hubs and Projects (HUBS)
+
+Manages the retrieval of hubs and project data.
+
+-   **GET /api/hubs**
+    -   **Description:** Fetches a list of all ACC hubs the user has access to.
+    -   **Response:** `[{ "id": "...", "name": "..." }, ...]`
+
+-   **GET /api/hubs/:hub_id/projects**
+    -   **Description:** Fetches a list of all projects within a specific hub.
+    -   **Path Parameters:** `hub_id`
+    -   **Response:** `[{ "id": "...", "name": "..." }, ...]`
+
+---
+
+## Project Content and File Management (PROJECTS)
+
+Handles operations related to the contents of a specific project.
+
+-   **GET /api/hubs/:hub_id/projects/:project_id/contents**
+    -   **Description:** Fetches the contents (folders and files) of a specific folder within a project. The initial call can be made without a `folder_id` to get the root-level contents.
+    -   **Path Parameters:** `hub_id`, `project_id`
+    -   **Query Parameters:** `folder_id` (optional)
+    -   **Response:** A tree-like structure of files and folders.
+        ```json
+        [
+            { "id": "...", "name": "Folder A", "type": "folder", "children": [...] },
+            { "id": "...", "name": "File B.rvt", "type": "file", "urn": "..." }
+        ]
+        ```
+
+-   **GET /api/hubs/:hub_id/projects/:project_id/items/:item_id/versions**
+    -   **Description:** Fetches the version history of a specific file (item).
+    -   **Path Parameters:** `hub_id`, `project_id`, `item_id`
+    -   **Response:** `[{ "id": "...", "version_number": 1, "urn": "..." }, ...]`
+
+-   **POST /api/hubs/:hub_id/projects/:project_id/folders**
+    -   **Description:** Creates a new folder within a specified parent folder in a project.
+    -   **Path Parameters:** `hub_id`, `project_id`
+    -   **Body:** `{ "folder_name": "New Folder Name", "parent_folder_id": "..." }`
+    -   **Response:** `{ "status": "success", "id": "...", "name": "New Folder Name" }`
+
+-   **POST /api/hubs/:hub_id/projects/:project_id/files**
+    -   **Description:** Uploads a new file to a specified folder in a project. This will likely be a multi-part form data request.
+    -   **Path Parameters:** `hub_id`, `project_id`
+    -   **Body:** `FormData` containing the file and `parent_folder_id`.
+    -   **Response:** `{ "status": "success", "id": "...", "name": "Uploaded File Name" }`
+
+-   **GET /api/download**
+    -   **Description:** Provides a way to download a specific file.
+    -   **Query Parameters:** `bucket_key`, `object_key`
+    -   **Response:** The file content as a stream.
