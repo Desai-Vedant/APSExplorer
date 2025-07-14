@@ -8,7 +8,7 @@ function HubTile({ hub }) {
             <CardActionArea component={Link} to={`/hubs/${hub.id}/projects`}>
                 <CardContent>
                     <Typography gutterBottom variant="h5" component="div">
-                        {hub.name}
+                        {hub.id}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                         Click to view projects

@@ -13,16 +13,14 @@ app.use(cors({
     credentials: true // Allow cookies to be sent
 }));
 
-app.set('trust proxy', 1); // Trust first proxy if behind one (for secure cookies in production)
-
 app.use(session({
-    secret: SESSION_SECRET || 'super-secret-key',
+    secret: SESSION_SECRET,
     resave: false,
-    saveUninitialized: false, // Only save session if something is stored
+    saveUninitialized: false,
     cookie: {
-        secure: false, // Set to true if using HTTPS in production
-        httpOnly: true, // Prevent JS access to cookie
-        sameSite: 'lax', // Helps with CSRF
+        httpOnly: true,
+        secure: false, // set to true if using HTTPS
+        sameSite: 'lax',
     },
 }));
 
@@ -31,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRouter);
 app.use('/api/hubs', hubsRouter);
-app.use('/api/hubs/:hub_id/projects', projectsRouter);
+app.use('/api', projectsRouter);
 
 app.get('/health', (req, res) => {
     res.send('Server is running');

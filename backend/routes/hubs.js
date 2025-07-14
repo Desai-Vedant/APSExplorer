@@ -1,13 +1,11 @@
 import express from 'express';
 import { getHubs, getProjects } from '../services/hubs.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
     try {
-        if (!req.session.credentials || !req.session.credentials.access_token) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
         const hubs = await getHubs(req.session.credentials.access_token);
         res.json(hubs);
     } catch (err) {
@@ -15,11 +13,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:hub_id/projects', async (req, res) => {
+router.get('/:hub_id/projects', authMiddleware, async (req, res) => {
     try {
-        if (!req.session.credentials || !req.session.credentials.access_token) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
         const { hub_id } = req.params;
         const projects = await getProjects(req.session.credentials.access_token, hub_id);
         res.json(projects);

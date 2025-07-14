@@ -14,14 +14,20 @@ function ProjectsPage() {
             credentials: 'include', // Send cookies for session auth
         })
             .then((response) => {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
                 if (!response.ok) {
                     throw new Error('Failed to fetch projects.');
                 }
                 return response.json();
             })
             .then((data) => {
-                setProjects(data);
-                setLoading(false);
+                if (data) {
+                    setProjects(data);
+                    setLoading(false);
+                }
             })
             .catch((err) => {
                 setError(err.message);

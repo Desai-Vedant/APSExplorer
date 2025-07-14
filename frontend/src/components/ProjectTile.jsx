@@ -9,7 +9,7 @@ function ProjectTile({ project }) {
             <CardActionArea component={Link} to={`/hubs/${hub_id}/projects/${project.id}`}>
                 <CardContent>
                     <Typography gutterBottom variant="h5" component="div">
-                        {project.name}
+                        {project.attributes.name || project.id}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                         Click to view details

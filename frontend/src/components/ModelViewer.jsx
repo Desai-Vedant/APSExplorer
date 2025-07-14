@@ -32,7 +32,7 @@ const ModelViewer = ({ runtime, urn }) => {
                 viewerRef.current = null;
             }
         };
-    }, [runtime]);
+    }, [runtime, urn]);
 
     useEffect(() => {
         if (viewerRef.current && urn) {

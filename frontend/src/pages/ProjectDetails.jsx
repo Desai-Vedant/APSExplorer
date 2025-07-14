@@ -1,81 +1,183 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Grid, Typography, Box, Paper, Select, MenuItem, CircularProgress, Alert } from '@mui/material';
-import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import {
+    Container,
+    Box,
+    Typography,
+    Paper,
+    CircularProgress,
+    Alert
+} from '@mui/material';
+import Grid from '@mui/material/Grid';
+import { RichTreeView } from '@mui/x-tree-view';
+import { TreeItem } from '@mui/x-tree-view';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import FolderIcon from '@mui/icons-material/Folder';
+import DescriptionIcon from '@mui/icons-material/Description';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ModelViewer from '../components/ModelViewer';
 
 function ProjectDetails() {
     const { hub_id, project_id } = useParams();
-    const [projects, setProjects] = useState([]);
-    const [selectedProject, setSelectedProject] = useState(project_id);
-    const [files, setFiles] = useState([]);
+    const [treeData, setTreeData] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [expanded, setExpanded] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [runtime, setRuntime] = useState({ accessToken: '' });
 
+    const loadFolderContents = useCallback(async (folderId = null) => {
+        try {
+            setLoading(true);
+            const url = `${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects/${project_id}/contents${folderId ? `?folder_id=${folderId}` : ''}`;
+            const response = await fetch(url, { credentials: 'include' });
+            
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch project contents.');
+            }
+
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                if (!folderId) {
+                    setTreeData(data.map(item => ({ ...item, children: [] })));
+                } else {
+                    setTreeData(prevData => updateTreeData(prevData, folderId, data.map(item => ({ ...item, children: [] }))));
+                }
+                setLoading(false);
+            }
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    }, [project_id]);
+
+    const loadVersions = async (itemId) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects/${project_id}/contents/${itemId}/versions`,
+                { credentials: 'include' }
+            );
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch versions.');
+            }
+
+            const versions = await response.json();
+            setTreeData(prevData => updateTreeData(prevData, itemId, versions));
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     useEffect(() => {
+        // Get viewer token
         fetch(`${import.meta.env.VITE_API_URL}/api/auth/token`, {
             credentials: 'include',
         })
-            .then(response => response.json())
-            .then(data => setRuntime({ accessToken: data.access_token }));
-
-        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects`, {
-            credentials: 'include',
-        })
-            .then((response) => response.json())
-            .then((data) => setProjects(data));
-
-        fetch(`${import.meta.env.VITE_API_URL}/api/hubs/${hub_id}/projects/${selectedProject}/contents`, {
-            credentials: 'include',
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch project contents.');
+            .then(response => {
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
                 }
                 return response.json();
             })
-            .then((data) => {
-                setFiles(data);
-                setLoading(false);
-            })
-            .catch((err) => {
-                setError(err.message);
-                setLoading(false);
+            .then(data => {
+                if (data) setRuntime({ accessToken: data.access_token });
             });
-    }, [hub_id, selectedProject]);
 
-    const handleProjectChange = (event) => {
-        setSelectedProject(event.target.value);
-    };
+        // Get project contents
+        loadFolderContents();
+    }, [project_id, loadFolderContents]);
 
-    const handleFileSelect = (event, nodeId) => {
-        const findFile = (nodes) => {
-            for (const node of nodes) {
-                if (node.id === nodeId) {
-                    return node;
-                }
+    const updateTreeData = useCallback((data, parentId, newChildren) => {
+        return data.map(node => {
+            if (node.id === parentId) {
+                return {
+                    ...node,
+                    children: newChildren
+                };
+            }
+            if (node.children) {
+                return {
+                    ...node,
+                    children: updateTreeData(node.children, parentId, newChildren)
+                };
+            }
+            return node;
+        });
+    }, []);
+
+    const handleFileSelect = async (event, nodeId) => {
+        const findNode = (data, id) => {
+            for (const node of data) {
+                if (node.id === id) return node;
                 if (node.children) {
-                    const found = findFile(node.children);
-                    if (found) {
-                        return found;
-                    }
+                    const found = findNode(node.children, id);
+                    if (found) return found;
                 }
             }
             return null;
         };
-        const file = findFile(files);
-        if (file && file.type === 'items') {
-            setSelectedFile(file.id);
+
+        const node = findNode(treeData, nodeId);
+        if (node) {
+            if (node.type === 'folders') {
+                await loadFolderContents(node.id);
+            } else if (node.type === 'items') {
+                await loadVersions(node.id);
+            } else if (node.type === 'versions') {
+                setSelectedFile(node.id);
+            }
         }
     };
 
-    const renderTree = (nodes) => (
-        <TreeItem key={nodes.id} nodeId={nodes.id} label={nodes.attributes.displayName}>
-            {Array.isArray(nodes.children) ? nodes.children.map((node) => renderTree(node)) : null}
-        </TreeItem>
-    );
+    const handleNodeToggle = (event, nodeIds) => {
+        setExpanded(nodeIds);
+    };
+
+    const getNodeIcon = (type) => {
+        switch (type) {
+            case 'folders':
+                return <FolderIcon />;
+            case 'items':
+                return <DescriptionIcon />;
+            case 'versions':
+                return <AccessTimeIcon />;
+            default:
+                return null;
+        }
+    };
+
+    const renderTree = (node) => {
+        if (!node) return null;
+        
+        const nodeId = node.id || '';
+        const label = node.attributes?.displayName || node.id;
+        const children = node.children || [];
+        
+        return (
+            <TreeItem 
+                key={nodeId} 
+                nodeId={nodeId} 
+                label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', p: 0.5 }}>
+                        {getNodeIcon(node.type)}
+                        <Typography sx={{ ml: 1 }}>{label}</Typography>
+                    </Box>
+                }
+            >
+                {Array.isArray(children) && children.length > 0
+                    ? children.map((child) => renderTree(child))
+                    : null}
+            </TreeItem>
+        );
+    };
 
     if (loading) {
         return <CircularProgress />;
@@ -89,27 +191,34 @@ function ProjectDetails() {
         <Container maxWidth="xl">
             <Box sx={{ my: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
-                    Project Details
+                    Project Files
                 </Typography>
-                <Select value={selectedProject} onChange={handleProjectChange}>
-                    {projects.map((project) => (
-                        <MenuItem key={project.id} value={project.id}>
-                            {project.attributes.name}
-                        </MenuItem>
-                    ))}
-                </Select>
             </Box>
             <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>
                     <Paper elevation={3} sx={{ p: 2, height: '70vh', overflowY: 'auto' }}>
-                        <Typography variant="h6">Files</Typography>
-                        <SimpleTreeView
+                        <Typography variant="h6" gutterBottom>File Browser</Typography>
+                        <RichTreeView
                             aria-label="file system navigator"
+                            defaultCollapseIcon={<ExpandMoreIcon />}
+                            defaultExpandIcon={<ChevronRightIcon />}
+                            expanded={expanded}
                             onNodeSelect={handleFileSelect}
-                            sx={{ height: 240, flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
+                            onNodeToggle={handleNodeToggle}
+                            sx={{ 
+                                height: '100%', 
+                                flexGrow: 1, 
+                                maxWidth: 400,
+                                overflowY: 'auto',
+                                '& .MuiTreeItem-root': {
+                                    '& .MuiTreeItem-content': {
+                                        py: 1,
+                                    },
+                                },
+                            }}
                         >
-                            {files.map((node) => renderTree(node))}
-                        </SimpleTreeView>
+                            {Array.isArray(treeData) && treeData.map((node) => renderTree(node))}
+                        </RichTreeView>
                     </Paper>
                 </Grid>
                 <Grid item xs={12} md={8}>

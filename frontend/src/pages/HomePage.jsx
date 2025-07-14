@@ -12,14 +12,21 @@ function HomePage() {
             credentials: 'include', // Send cookies for session auth
         })
             .then((response) => {
+                if (response.status === 401) {
+                    // Not authorized, redirect to login or show message
+                    window.location.href = '/login';
+                    return;
+                }
                 if (!response.ok) {
                     throw new Error('Failed to fetch hubs.');
                 }
                 return response.json();
             })
             .then((data) => {
-                setHubs(data);
-                setLoading(false);
+                if (data) {
+                    setHubs(data);
+                    setLoading(false);
+                }
             })
             .catch((err) => {
                 setError(err.message);

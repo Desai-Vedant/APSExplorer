@@ -12,7 +12,9 @@ router.get('/callback', async (req, res) => {
         const { code } = req.query;
         const credentials = await exchangeCodeForToken(code);
         req.session.credentials = credentials;
-        req.session.user_profile = await getUserProfile(credentials);
+        const userProfile = await getUserProfile(credentials);
+        req.session.user_profile = userProfile;
+        req.session.user_email = userProfile.email;
         // Redirect to frontend after successful login
         const { FRONTEND_URL } = await import('../config.js');
         res.redirect(`${FRONTEND_URL}/home`);
@@ -21,9 +23,11 @@ router.get('/callback', async (req, res) => {
     }
 });
 
+
+
 router.get('/token', (req, res) => {
-    if (req.session.credentials) {  
-        res.json(req.session.credentials);
+    if (req.session.credentials && req.session.credentials.access_token) {
+        res.json({ access_token: req.session.credentials.access_token });
     } else {
         res.status(401).json({ error: 'Unauthorized' });
     }

@@ -1,107 +1,51 @@
 import { DataManagementClient } from '@aps_sdk/data-management';
-import { APS_CLIENT_ID, APS_CLIENT_SECRET } from '../config.js';
-import fs from 'fs';
-import path from 'path';
-import axios from 'axios';
 
 const dataManagementClient = new DataManagementClient();
 
-export const getContents = async (projectId, folderId, accessToken) => {
-    if (folderId) {
-        const contents = await dataManagementClient.getFolderContents(projectId, folderId, null, { accessToken });
-        return contents.data;
-    } else {
-        const contents = await dataManagementClient.getProjectTopFolders(projectId, { accessToken });
-        return contents.data;
+export const getContents = async (hubId, projectId, folderId, accessToken) => {
+    try {
+        if (!folderId) {
+            // Get top-level folders for the project
+            const resp = await dataManagementClient.getProjectTopFolders(hubId, projectId, { accessToken });
+            return resp.data.map(item => ({
+                id: item.id,
+                type: item.type,
+                attributes: {
+                    displayName: item.attributes.displayName,
+                    extension: item.attributes.extension
+                }
+            }));
+        } else {
+            // Get contents of a folder
+            const resp = await dataManagementClient.getFolderContents(projectId, folderId, { accessToken });
+            return resp.data.map(item => ({
+                id: item.id,
+                type: item.type,
+                attributes: {
+                    displayName: item.attributes.displayName,
+                    extension: item.attributes.extension
+                }
+            }));
+        }
+    } catch (error) {
+        console.error('Error getting contents:', error);
+        throw error;
     }
 };
 
-export const getVersions = async (projectId, itemId, accessToken) => {
-    const versions = await dataManagementClient.getItemVersions(projectId, itemId, null, { accessToken });
-    return versions.data;
-};
-
-export const createFolder = async (projectId, folderName, parentFolderId, accessToken) => {
-    const newFolder = await dataManagementClient.postFolder(projectId, { jsonapi: { version: '1.0' }, data: { type: 'folders', attributes: { name: folderName, extension: { type: 'folders:autodesk.core:Folder', version: '1.0' } }, relationships: { parent: { data: { type: 'folders', id: parentFolderId } } } } }, { accessToken });
-    return newFolder.data;
-};
-
-export const uploadFile = async (projectId, fileName, parentFolderId, filePath, accessToken) => {
-    // 1. Create a storage location in the folder
-    const storagePayload = {
-        jsonapi: { version: '1.0' },
-        data: {
-            type: 'objects',
-            attributes: { name: fileName },
-            relationships: {
-                target: {
-                    data: {
-                        type: 'folders',
-                        id: parentFolderId
-                    }
-                }
-            }
-        }
-    };
-    const storageRes = await dataManagementClient.createStorage(accessToken, projectId, undefined, storagePayload);
-    const storageId = storageRes.data.data.id; // e.g. urn:adsk.objects:os.object:bucketKey/objectKey
-    const uploadUrl = storageRes.data.data.links.upload.href;
-
-    // 2. Upload the file to OSS using the upload URL
-    const fileStream = fs.createReadStream(filePath);
-    await axios.put(uploadUrl, fileStream, {
-        headers: {
-            'Content-Type': 'application/octet-stream',
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-    });
-
-    // 3. Create the item in the folder referencing the storage
-    const itemPayload = {
-        jsonapi: { version: '1.0' },
-        data: {
-            type: 'items',
+export const getVersions = async (hubId, projectId, itemId, accessToken) => {
+    try {
+        const resp = await dataManagementClient.getItemVersions(projectId, itemId, { accessToken });
+        return resp.data.map(version => ({
+            id: version.id,
+            type: 'versions',
             attributes: {
-                name: fileName,
-                extension: {
-                    type: 'items:autodesk.bim360:File',
-                    version: '1.0'
-                }
-            },
-            relationships: {
-                parent: {
-                    data: {
-                        type: 'folders',
-                        id: parentFolderId
-                    }
-                }
+                displayName: new Date(version.attributes.createTime).toLocaleString(),
+                createTime: version.attributes.createTime
             }
-        },
-        included: [
-            {
-                type: 'versions',
-                id: '1',
-                attributes: {
-                    name: fileName,
-                    extension: {
-                        type: 'versions:autodesk.bim360:File',
-                        version: '1.0'
-                    }
-                },
-                relationships: {
-                    storage: {
-                        data: {
-                            type: 'objects',
-                            id: storageId
-                        }
-                    }
-                }
-            }
-        ]
-    };
-    const itemRes = await dataManagementClient.createItem(accessToken, projectId, undefined, undefined, itemPayload);
-    // Optionally, delete the temp file
-    fs.unlink(filePath, () => {});
-    return itemRes.data;
+        }));
+    } catch (error) {
+        console.error('Error getting versions:', error);
+        throw error;
+    }
 };
