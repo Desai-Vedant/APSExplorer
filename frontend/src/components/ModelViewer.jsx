@@ -43,7 +43,7 @@ const ModelViewer = ({ runtime, urn , urnEncoded}) => {
 
     useEffect(() => {
         if (viewerRef.current && urn) {
-            viewerRef.current.tearDown();
+            viewerRef.current.unloadModel();
             loadModel(viewerRef.current, urnEncoded);
         }
     }, [urn]);
