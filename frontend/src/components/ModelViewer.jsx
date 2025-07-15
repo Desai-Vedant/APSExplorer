@@ -7,7 +7,7 @@ const ModelViewer = ({ runtime, urn }) => {
     const containerRef = useRef(null);
 
     useEffect(() => {
-        if (!runtime || !runtime.accessToken) return;
+        if (!runtime) return;
 
         const options = {
             env: 'AutodeskProduction',
@@ -22,7 +22,7 @@ const ModelViewer = ({ runtime, urn }) => {
             viewer.start();
             viewerRef.current = viewer;
             if (urn) {
-                loadModel(viewer, urn);
+                loadModel(viewer, btoa(urn));
             }
         });
 
@@ -32,7 +32,7 @@ const ModelViewer = ({ runtime, urn }) => {
                 viewerRef.current = null;
             }
         };
-    }, [runtime, urn]);
+    }, [runtime]);
 
     useEffect(() => {
         if (viewerRef.current && urn) {
@@ -41,19 +41,19 @@ const ModelViewer = ({ runtime, urn }) => {
     }, [urn]);
 
     const loadModel = (viewer, documentId) => {
-        const onDocumentLoadSuccess = (doc) => {
-            const viewables = doc.getRoot().getDefaultGeometry();
-            viewer.loadDocumentNode(doc, viewables);
-        };
-        const onDocumentLoadFailure = (errorCode, errorMsg) => {
-            console.error('Load failed! ', errorCode, errorMsg);
-        };
-
         if (!documentId.startsWith('urn:')) {
-            documentId = 'urn:' + btoa(documentId).replace(/=/g, '');
+            documentId = 'urn:' + documentId;
         }
-
-        Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
+        Autodesk.Viewing.Document.load(
+            documentId,
+            (doc) => {
+                const viewables = doc.getRoot().getDefaultGeometry();
+                viewer.loadDocumentNode(doc, viewables);
+            },
+            (errorCode, errorMsg) => {
+                console.error('Load failed! ', errorCode, errorMsg);
+            }
+        );
     };
 
     return <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }} />;
