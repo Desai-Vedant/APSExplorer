@@ -143,7 +143,7 @@ function ProjectDetails2() {
                 <div ref={treeContainer} style={{ height: '100%' }} className="inspire-tree"></div>
             </div>
             <div style={{ flex: 1, height: '100%' }}>
-                {selectedFile && <ModelViewer runtime={runtime} urn={selectedFile} />}
+                {selectedFile && <ModelViewer runtime={runtime} urn={selectedFile} urnEncoded={btoa(selectedFile)}/>}
             </div>
         </div>
     );

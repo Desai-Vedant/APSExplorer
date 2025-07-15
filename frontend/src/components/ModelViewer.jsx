@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 const { Autodesk } = window;
 
-const ModelViewer = ({ runtime, urn }) => {
+const ModelViewer = ({ runtime, urn , urnEncoded}) => {
     const viewerRef = useRef(null);
     const containerRef = useRef(null);
 
@@ -36,7 +36,8 @@ const ModelViewer = ({ runtime, urn }) => {
 
     useEffect(() => {
         if (viewerRef.current && urn) {
-            loadModel(viewerRef.current, urn);
+            viewerRef.current.tearDown();
+            loadModel(viewerRef.current, urnEncoded);
         }
     }, [urn]);
 
