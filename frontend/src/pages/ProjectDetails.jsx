@@ -4,6 +4,7 @@ import InspireTree from 'inspire-tree';
 import InspireTreeDOM from 'inspire-tree-dom';
 import 'inspire-tree-dom/dist/inspire-tree-light.css';
 import ModelViewer from '../components/ModelViewer';
+import { theme } from '../theme';
 
 function ProjectDetails2() {
     const { project_id, hub_id } = useParams();
@@ -11,6 +12,48 @@ function ProjectDetails2() {
     const [selectedFile, setSelectedFile] = useState(null);
     const treeContainer = useRef(null);
     const treeInstance = useRef(null);
+
+    const styles = {
+        container: {
+            display: 'flex',
+            height: '100vh',
+            backgroundColor: theme.colors.background
+        },
+        sidebar: {
+            width: '300px',
+            backgroundColor: theme.colors.surface,
+            borderRight: `1px solid ${theme.colors.border}`,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        },
+        treeContainer: {
+            flex: 1,
+            overflow: 'auto',
+            padding: theme.spacing.md
+        },
+        viewer: {
+            flex: 1,
+            height: '100%',
+            backgroundColor: theme.colors.background,
+            position: 'relative'
+        },
+        header: {
+            padding: theme.spacing.md,
+            borderBottom: `1px solid ${theme.colors.border}`,
+            backgroundColor: theme.colors.surface
+        },
+        title: {
+            color: theme.colors.text.primary,
+            fontSize: '18px',
+            fontWeight: 500,
+            marginBottom: theme.spacing.xs
+        },
+        subtitle: {
+            color: theme.colors.text.secondary,
+            fontSize: '14px'
+        }
+    };
 
     function createTreeNode(id, text, icon, children = false) {
         return { id, text, children, itree: { icon } };
@@ -138,12 +181,24 @@ function ProjectDetails2() {
     }, [hub_id, project_id]);
 
     return (
-        <div style={{ display: 'flex', height: '100vh', padding: '20px' }}>
-            <div style={{ width: '300px', marginRight: '20px', overflow: 'auto' }}>
-                <div ref={treeContainer} style={{ height: '100%' }} className="inspire-tree"></div>
+        <div style={styles.container}>
+            <div style={styles.sidebar}>
+                <div style={styles.header}>
+                    <h2 style={styles.title}>Project Browser</h2>
+                    <p style={styles.subtitle}>Browse project files and models</p>
+                </div>
+                <div style={styles.treeContainer}>
+                    <div ref={treeContainer} className="inspire-tree"></div>
+                </div>
             </div>
-            <div style={{ flex: 1, height: '100%' }}>
-                {selectedFile && <ModelViewer runtime={runtime} urn={selectedFile} urnEncoded={btoa(selectedFile)}/>}
+            <div style={styles.viewer}>
+                {selectedFile && (
+                    <ModelViewer
+                        runtime={runtime}
+                        urn={selectedFile}
+                        urnEncoded={btoa(selectedFile)}
+                    />
+                )}
             </div>
         </div>
     );

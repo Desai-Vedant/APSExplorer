@@ -5,6 +5,13 @@ const { Autodesk } = window;
 const ModelViewer = ({ runtime, urn , urnEncoded}) => {
     const viewerRef = useRef(null);
     const containerRef = useRef(null);
+    const config = {
+        extensions: [
+            'LoggerExtension',
+            'SummaryExtension',
+            'SampleExtension'
+        ]
+    };
 
     useEffect(() => {
         if (!runtime) return;
@@ -18,7 +25,7 @@ const ModelViewer = ({ runtime, urn , urnEncoded}) => {
         };
 
         Autodesk.Viewing.Initializer(options, () => {
-            const viewer = new Autodesk.Viewing.GuiViewer3D(containerRef.current);
+            const viewer = new Autodesk.Viewing.GuiViewer3D(containerRef.current, config);
             viewer.start();
             viewerRef.current = viewer;
             if (urn) {
