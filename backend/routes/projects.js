@@ -31,4 +31,18 @@ router.get('/hubs/:hub_id/projects/:project_id/contents/:item_id/versions', asyn
     }
 });
 
+router.post('/hubs/:hub_id/projects/:project_id/contents/upload', async (req, res) => {
+    try {
+        const { hub_id, project_id } = req.params;
+        const { folder_id } = req.body;
+        const file = req.file;
+        const accessToken = req.session.credentials.access_token;
+
+        const uploadResponse = await uploadFile(hub_id, project_id, folder_id, file, accessToken);
+        res.json(uploadResponse);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;
