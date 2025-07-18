@@ -6,10 +6,12 @@ import 'inspire-tree-dom/dist/inspire-tree-light.css';
 import ModelViewer from '../components/ModelViewer';
 import { theme } from '../theme';
 
-function ProjectDetails2() {
+function ProjectDetails() {
     const { project_id, hub_id } = useParams();
     const [runtime, setRuntime] = useState({ accessToken: '' });
     const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedUploadFile, setSelectedUploadFile] = useState(null);
+    const [selectedFolder, setSelectedFolder] = useState(null);
     const treeContainer = useRef(null);
     const treeInstance = useRef(null);
 
@@ -20,7 +22,7 @@ function ProjectDetails2() {
             backgroundColor: theme.colors.background
         },
         sidebar: {
-            width: '300px',
+            width: '350px',
             backgroundColor: theme.colors.surface,
             borderRight: `1px solid ${theme.colors.border}`,
             display: 'flex',
@@ -43,6 +45,37 @@ function ProjectDetails2() {
             borderBottom: `1px solid ${theme.colors.border}`,
             backgroundColor: theme.colors.surface
         },
+        footer: {
+            padding: theme.spacing.md,
+            borderTop: `1px solid ${theme.colors.border}`,
+            backgroundColor: theme.colors.surface
+        },
+        button: {
+            disabled: false,
+            backgroundColor: theme.colors.primary,
+            color: theme.colors.text.light,
+            padding: `${theme.spacing.md} ${theme.spacing.xl}`,
+            borderRadius: theme.borderRadius.md,
+            fontSize: '16px',
+            fontWeight: 400,
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+            border: 'none',
+            width: '100%'
+        },
+        button_disabled: {
+            disabled: true,
+            backgroundColor: theme.colors.secondary,
+            color: theme.colors.text.light,
+            padding: `${theme.spacing.md} ${theme.spacing.xl}`,
+            borderRadius: theme.borderRadius.md,
+            fontSize: '16px',
+            fontWeight: 400,
+            cursor: 'not-allowed',
+            transition: 'background-color 0.2s ease',
+            border: 'none',
+            width: '100%'
+        },
         title: {
             color: theme.colors.text.primary,
             fontSize: '18px',
@@ -52,7 +85,18 @@ function ProjectDetails2() {
         subtitle: {
             color: theme.colors.text.secondary,
             fontSize: '14px'
-        }
+        },
+        fileinput: {
+            display: 'block',
+            margin: `${theme.spacing.sm} 0`,
+            padding: theme.spacing.sm,
+            borderRadius: theme.borderRadius.sm,
+            border: `1px solid ${theme.colors.border}`,
+            width: '100%',
+            fontSize: '14px',
+            color: theme.colors.text.primary
+        },
+        footerfont: { marginBottom: theme.spacing.sm, color: theme.colors.text.secondary, fontSize: '10px' }
     };
 
     function createTreeNode(id, text, icon, children = false) {
@@ -155,6 +199,14 @@ function ProjectDetails2() {
                 const [type, id] = node.id.split('|');
                 if (type === 'version') {
                     setSelectedFile(id);
+                    setSelectedFolder(null);
+                }
+                if (type === 'folders') {
+                    console.log('Folder selected:', id);
+                    setSelectedFolder(id);
+                }
+                if (type === 'items') {
+                    setSelectedFolder(null);
                 }
             });
 
@@ -190,6 +242,19 @@ function ProjectDetails2() {
                 <div style={styles.treeContainer}>
                     <div ref={treeContainer} className="inspire-tree"></div>
                 </div>
+                <div style={styles.footer}>
+                    {selectedFolder ? (
+                        <p style={styles.footerfont}>
+                            Selected Folder: {selectedFolder}
+                        </p>
+                    ) : (
+                        <p style={styles.footerfont}>
+                            No folder selected
+                        </p>
+                    )}
+                    <input type="file" style={styles.fileinput} onChange={(e) => setSelectedUploadFile(e.target.files[0])}></input>
+                    <button style={selectedUploadFile ? styles.button : styles.button_disabled}>Upload</button>
+                </div>
             </div>
             <div style={styles.viewer}>
                 {selectedFile && (
@@ -204,4 +269,4 @@ function ProjectDetails2() {
     );
 }
 
-export default ProjectDetails2;
+export default ProjectDetails;
